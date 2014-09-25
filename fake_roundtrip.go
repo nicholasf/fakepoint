@@ -5,32 +5,46 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"fmt"
 )
 
 const REDIRECTED_LOCATION = "/new-location/"
 
-func NewFakeClient(method string, url string, document string) *FakeRoundTripClient {
-	fr := &FakeRoundTrip {
-		method:     method,
-		url:        url,
-		document:   document,
-		statusCode: 200,
-		header: &http.Header{},
+func NewFakeClient() *FakeRoundTripClient {
+	fakeRoundTripAgent :=  NewFakeRoundTripAgent()
+	fakeClient := &FakeRoundTripClient{
+		fakeRoundTripAgent: fakeRoundTripAgent,
 	}
 
-	fakeClient := &FakeRoundTripClient{ fakeRoundTrip: fr }
-	fakeClient.Transport = fr
+	fakeClient.Transport = fakeRoundTripAgent
 	return fakeClient
 }
 
 type FakeRoundTripClient struct {
 	http.Client
-	fakeRoundTrip *FakeRoundTrip
+	fakeRoundTripAgent *FakeRoundTripAgent
 }
 
-func (f FakeRoundTripClient) SetStatusCode(code int) *FakeRoundTripClient {
-	f.fakeRoundTrip.statusCode = code
+func (f FakeRoundTripClient) AddTrip(method, url string, statusCode int, document string) *FakeRoundTrip {
+	fr := &FakeRoundTrip {
+		method:     method,
+		url:        url,
+		document:   document,
+		statusCode: statusCode,
+		header: &http.Header{},
+	}
+
+	f.fakeRoundTripAgent.add(url, *fr)
+	return fr
+}
+
+
+func (f FakeRoundTripClient) PlanGet(url string, statusCode int, document string) *FakeRoundTrip {
+	return f.AddTrip("GET", url, statusCode, document)
+}
+
+
+func (f FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
+	f.statusCode = code
 
 	locationRequired := code == 302 || code == 201 || code == 202
 
@@ -41,14 +55,34 @@ func (f FakeRoundTripClient) SetStatusCode(code int) *FakeRoundTripClient {
 	return &f
 }
 
-func (f FakeRoundTripClient) SetResponseHeader(key string, value string) *FakeRoundTripClient {
-	f.fakeRoundTrip.header.Set(key, value)
+func (f FakeRoundTrip) SetResponseHeader(key string, value string) *FakeRoundTrip {
+	f.header.Set(key, value)
 	return &f
 }
 
-func (f FakeRoundTripClient) SetURL(url string) *FakeRoundTripClient {
-	f.fakeRoundTrip.url = url
+func (f FakeRoundTrip) SetURL(url string) *FakeRoundTrip {
+	f.url = url
 	return &f
+}
+
+func NewFakeRoundTripAgent() *FakeRoundTripAgent {
+	return &FakeRoundTripAgent{ roundTrips: make(map[string]http.RoundTripper) }
+}
+
+type FakeRoundTripAgent struct {
+	roundTrips map[string]http.RoundTripper
+}
+
+func (f FakeRoundTripAgent) RoundTrip(r *http.Request) (*http.Response, error) {
+	if roundTrip := f.roundTrips[r.URL.String()]; roundTrip != nil {
+		return roundTrip.RoundTrip(r)
+	}
+
+	return FourOFour(), nil
+}
+
+func (f FakeRoundTripAgent) add(url string, roundTrip FakeRoundTrip) {
+	f.roundTrips[url] = roundTrip
 }
 
 type FakeRoundTrip struct {
@@ -59,40 +93,25 @@ type FakeRoundTrip struct {
 	header 	*http.Header
 }
 
-type FakeReadCloser struct {
-	io.Reader
-}
-
-func (f FakeReadCloser) Close() error {
-	return nil
-}
-
 func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
-	fmt.Println("*************** ", f.url)
 	var statusCode int = f.statusCode
-
-	fr := &FakeReadCloser{
-		Reader: strings.NewReader(f.document),
-	}
-
 	expectedURL, _ := url.Parse(f.url)
-//	fmt.Println("expectedURL: ", expectedURL)
-//	fmt.Println("actualURL: ",  *r.URL)
+	
 	if !urlMatches(*r.URL, *expectedURL) {
 		statusCode = 404
+		return FourOFour(), nil
 	}
 
-	if (statusCode == 302) {
-		f.url = r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
-		fmt.Println("URL reset to ", f.url, " for next req")
-		fmt.Println("\n\n\n")
-	}
+//	if (statusCode == 302) {
+//		f.url = r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
+//		fmt.Println("URL reset to ", f.url, " for next req")
+//		fmt.Println("\n\n\n")
+//	}
 
 	expectedURL, _ = url.Parse(f.url)
-	fmt.Println("expectedURL2: ", expectedURL)
 
 	resp := &http.Response {
-		Body:       fr,
+		Body:       NewFakeReadCloser(f.document),
 		StatusCode: statusCode,
 		Header: *f.header,
 	}
@@ -102,13 +121,13 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func urlMatches(actual url.URL, expected url.URL) bool {
 	match := (actual.Scheme == expected.Scheme) && (actual.Host == expected.Host) && (actual.Path == expected.Path) && (actual.RawQuery == expected.RawQuery)
-	fmt.Println("1: ", (actual.Scheme == expected.Scheme))
-	fmt.Println("2: ", (actual.Host == expected.Host))
-	fmt.Println("3: ", (actual.Path == expected.Path))
-	fmt.Println("actual.Path ", actual.Path)
-	fmt.Println("expected.Path ", expected.Path)
-
-	fmt.Println("4: ", (actual.RawQuery == expected.RawQuery))
+//	fmt.Println("1: ", (actual.Scheme == expected.Scheme))
+//	fmt.Println("2: ", (actual.Host == expected.Host))
+//	fmt.Println("3: ", (actual.Path == expected.Path))
+//	fmt.Println("actual.Path ", actual.Path)
+//	fmt.Println("expected.Path ", expected.Path)
+//
+//	fmt.Println("4: ", (actual.RawQuery == expected.RawQuery))
 
 	if match {
 		return true
@@ -118,6 +137,31 @@ func urlMatches(actual url.URL, expected url.URL) bool {
 }
 
 //per handle location headers: http://en.wikipedia.org/wiki/HTTP_location
-func setDefaultLocationHeader(f *FakeRoundTripClient) {
+func setDefaultLocationHeader(f *FakeRoundTrip) {
 	f.SetResponseHeader("Location", REDIRECTED_LOCATION)
+}
+
+func FourOFour() *http.Response {
+	resp := &http.Response {
+		Body:    NewFakeReadCloser("Unknown"),
+		StatusCode: 404,
+	}
+
+	return resp
+}
+
+func NewFakeReadCloser(body string) *FakeReadCloser {
+	fr := &FakeReadCloser{
+		Reader: strings.NewReader(body),
+	}
+
+	return fr
+}
+
+type FakeReadCloser struct {
+	io.Reader
+}
+
+func (f FakeReadCloser) Close() error {
+	return nil
 }
