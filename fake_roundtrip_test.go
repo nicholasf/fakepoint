@@ -4,7 +4,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"testing"
-//	"fmt"
+	"bytes"
 )
 
 func TestFakeRoundTrip(t *testing.T) {
@@ -16,7 +16,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 	})
 
-	Convey("Basic DSL - add roundtrip", t, func() {
+	Convey("Basic DSL - planning roundtrips", t, func() {
 		client := NewFakeClient()
 
 		Convey("it returns the document with a 200", func() {
@@ -32,51 +32,60 @@ func TestFakeRoundTrip(t *testing.T) {
 			resp, _ := client.Get("https://somethingelse.com")
 			So(resp.StatusCode, ShouldEqual, 404)
 		})
+
+		Convey("the header", func() {
+			client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetResponseHeader("Content-Type", "application/json")
+			resp, err := client.Get("https://api.opsgenie.com/v1/json/alert")
+			So(err, ShouldBeNil)
+			So(resp.Header.Get("Content-Type"), ShouldEqual, "application/json")
+		})
 	})
-}
-//	Convey("Chaining response setters on the client", t, func() {
-//		client := NewFakeClient("GET", "https://api.opsgenie.com/v1/json/alert", "hello world")
 
-//		Convey("the header", func() {
-//			client.SetResponseHeader("Content-Type", "application/json")
-//			resp, err := client.Get("https://api.opsgenie.com/v1/json/alert")
-//			So(err, ShouldBeNil)
-//			So(resp.Header.Get("Content-Type"), ShouldEqual, "application/json")
-//		})
+	Convey("The Client handles multiple fake round trips", t, func() {
+		client := NewFakeClient()
+		Convey("distinct URLs", func() {
+			client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world")
+			client.PlanGet("https://another.system.com", 200, "not with a bang but a whimper")
+			resp1, err := client.Get("https://api.opsgenie.com/v1/json/alert")
+			text, _ := ioutil.ReadAll(resp1.Body)
+			So(err, ShouldBeNil)
+			So(string(text), ShouldEqual, "hello world")
+			So(resp1.StatusCode, ShouldEqual, 200)
+
+			resp2, err2 := client.Get("https://another.system.com")
+			text, _ = ioutil.ReadAll(resp2.Body)
+			So(err2, ShouldBeNil)
+			So(string(text), ShouldEqual, "not with a bang but a whimper")
+			So(resp2.StatusCode, ShouldEqual, 200)
+		})
+
+		Convey("Identical URLs, different HTTP methods", func() {
+			client.PlanPost("abc.com/greeting", 201, "hello world")
+			client.PlanGet("abc.com/greeting", 200, "hello world")
+
+			resp1, err := client.Post("abc.com/greeting", "application/text", bytes.NewReader([]byte{'g', 'o'}))
+			text, _ := ioutil.ReadAll(resp1.Body)
+			So(err, ShouldBeNil)
+			So(string(text), ShouldEqual, "hello world")
+			So(resp1.StatusCode, ShouldEqual, 201)
+
+//			resp2, err2 := client.Get("https://abc.com")
+//			text, _ = ioutil.ReadAll(resp2.Body)
+//			So(err2, ShouldBeNil)
+//			So(string(text), ShouldEqual, "hello world")
+//			So(resp2.StatusCode, ShouldEqual, 201)
+		})
+	})
+
+//	Convey("302s (following redirects)", t, func() {
+//		client := NewFakeClient()
 //
-//		Convey("the status code, generically", func() {
-//			client = client.SetStatusCode(500)
-//			resp, err := client.Get("https://api.opsgenie.com/v1/json/alert")
-//			So(err, ShouldBeNil)
-//			So(resp.StatusCode, ShouldEqual, 500)
-//		})
-
 //		Convey("the status code, with Location headers for 201, 202, 302", func() {
-//			locationRequiredCodes := []int{ 201, 302, 202 }
-//			locationRequiredCodes := []int{ 302 }
-//
-//			for _, code := range locationRequiredCodes {
-//				fmt.Println("code: ", code)
-//				client = client.SetStatusCode(code)
-//				resp, err := client.Get("https://api.opsgenie.com/v1/json/alert")
-//				So(err, ShouldBeNil)
-//				So(resp.Header.Get("Location"), ShouldNotBeNil)
-//				fmt.Println("scode: ", resp.StatusCode)
-//				So(resp.StatusCode, ShouldEqual, code)
-//				fmt.Println("done.")
-//			}
-//		})
-
-
-		//		Convey("the status code", func() {
-		//			client = client.SetStatusCode(302)
-		//		})
-
-//		Convey("it can accept a header status code", t, func() {
-//			resp, _ := client.Get("https://api.opsgenie.com/v1/json/alert")
-//			foo, _ := ioutil.ReadAll(resp.Body)
-//			So(resp, ShouldNotBeNil)
-//			So(string(foo), ShouldEqual, "hello world")
+//			client.PlanGet("abc.com", 302, "")
+//			resp, err := client.Get("abc.com")
+//			So(err, ShouldBeNil)
+//			So(resp.Header.Get("Location"), ShouldNotBeNil)
+//			So(resp.StatusCode, ShouldEqual, code)
 //		})
 //	})
-//}
+}

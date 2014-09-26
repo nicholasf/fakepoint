@@ -33,7 +33,7 @@ func (f FakeRoundTripClient) AddTrip(method, url string, statusCode int, documen
 		header: &http.Header{},
 	}
 
-	f.fakeRoundTripAgent.add(url, *fr)
+	f.fakeRoundTripAgent.add(url, method, *fr)
 	return fr
 }
 
@@ -42,6 +42,17 @@ func (f FakeRoundTripClient) PlanGet(url string, statusCode int, document string
 	return f.AddTrip("GET", url, statusCode, document)
 }
 
+func (f FakeRoundTripClient) PlanPost(url string, statusCode int, document string) *FakeRoundTrip {
+	return f.AddTrip("POST", url, statusCode, document)
+}
+
+func (f FakeRoundTripClient) PlanPut(url string, statusCode int, document string) *FakeRoundTrip {
+	return f.AddTrip("PUT", url, statusCode, document)
+}
+
+func (f FakeRoundTripClient) PlanDelete(url string, statusCode int, document string) *FakeRoundTrip {
+	return f.AddTrip("DELETE", url, statusCode, document)
+}
 
 func (f FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
 	f.statusCode = code
@@ -74,15 +85,26 @@ type FakeRoundTripAgent struct {
 }
 
 func (f FakeRoundTripAgent) RoundTrip(r *http.Request) (*http.Response, error) {
-	if roundTrip := f.roundTrips[r.URL.String()]; roundTrip != nil {
+	if roundTrip := f.roundTrips[f.getKey(*r)]; roundTrip != nil {
 		return roundTrip.RoundTrip(r)
 	}
 
 	return FourOFour(), nil
 }
 
-func (f FakeRoundTripAgent) add(url string, roundTrip FakeRoundTrip) {
-	f.roundTrips[url] = roundTrip
+func (f FakeRoundTripAgent) add(url, method string, roundTrip FakeRoundTrip) {
+	roundTrip.fakeRoundTripAgent = &f
+
+	key :=	f.makeKey(url, method)
+	f.roundTrips[key] = roundTrip
+}
+
+func (f FakeRoundTripAgent) makeKey(url, method string) string {
+	return url + ":" + method
+}
+
+func (f FakeRoundTripAgent) getKey(r http.Request) string {
+	return r.URL.String() + ":" + r.Method
 }
 
 type FakeRoundTrip struct {
@@ -91,19 +113,21 @@ type FakeRoundTrip struct {
 	url        string
 	document   string
 	header 	*http.Header
+	fakeRoundTripAgent *FakeRoundTripAgent
 }
 
 func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	var statusCode int = f.statusCode
 	expectedURL, _ := url.Parse(f.url)
-	
+
 	if !urlMatches(*r.URL, *expectedURL) {
 		statusCode = 404
 		return FourOFour(), nil
 	}
 
 //	if (statusCode == 302) {
-//		f.url = r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
+//		redirectedURL := r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
+//		f.fakeRoundTripAgent.add(redirectedURL *****************)
 //		fmt.Println("URL reset to ", f.url, " for next req")
 //		fmt.Println("\n\n\n")
 //	}
@@ -121,14 +145,6 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func urlMatches(actual url.URL, expected url.URL) bool {
 	match := (actual.Scheme == expected.Scheme) && (actual.Host == expected.Host) && (actual.Path == expected.Path) && (actual.RawQuery == expected.RawQuery)
-//	fmt.Println("1: ", (actual.Scheme == expected.Scheme))
-//	fmt.Println("2: ", (actual.Host == expected.Host))
-//	fmt.Println("3: ", (actual.Path == expected.Path))
-//	fmt.Println("actual.Path ", actual.Path)
-//	fmt.Println("expected.Path ", expected.Path)
-//
-//	fmt.Println("4: ", (actual.RawQuery == expected.RawQuery))
-
 	if match {
 		return true
 	}
