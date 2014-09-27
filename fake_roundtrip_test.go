@@ -13,12 +13,13 @@ func TestFakeRoundTrip(t *testing.T) {
 		client := NewFakeClient()
 
 		Convey("it returns the document with a 200", func() {
-			client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world")
+			client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetHeader("Content-Type", "text/plain")
 
 			resp, _ := client.Get("https://api.opsgenie.com/v1/json/alert")
 			text, _ := ioutil.ReadAll(resp.Body)
 			So(string(text), ShouldEqual, "hello world")
 			So(resp.StatusCode, ShouldEqual, 200)
+			So(resp.Header.Get("Content-Type"), ShouldEqual, "text/plain")
 		})
 
 		Convey("it doesnt resolve to the wrong URL", func() {
@@ -27,7 +28,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 
 		Convey("the header", func() {
-			client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetResponseHeader("Content-Type", "application/json")
+			client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetHeader("Content-Type", "application/json")
 			resp, err := client.Get("https://api.opsgenie.com/v1/json/alert")
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Content-Type"), ShouldEqual, "application/json")

@@ -29,7 +29,7 @@ func (f FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
 	return &f
 }
 
-func (f FakeRoundTrip) SetResponseHeader(key string, value string) *FakeRoundTrip {
+func (f FakeRoundTrip) SetHeader(key string, value string) *FakeRoundTrip {
 	f.header.Set(key, value)
 	return &f
 }
@@ -92,7 +92,7 @@ func (f FakeRoundTrip) requestMatches(r http.Request) bool {
 
 //per handle location headers: http://en.wikipedia.org/wiki/HTTP_location
 func setDefaultLocationHeader(f *FakeRoundTrip) {
-	f.SetResponseHeader("Location", REDIRECTED_LOCATION)
+	f.SetHeader("Location", REDIRECTED_LOCATION)
 }
 
 func FourOFour() *http.Response {
