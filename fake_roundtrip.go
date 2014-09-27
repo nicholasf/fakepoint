@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"fmt"
 )
 
 const REDIRECTED_LOCATION = "/new-location/"
@@ -89,6 +90,8 @@ func (f FakeRoundTripAgent) RoundTrip(r *http.Request) (*http.Response, error) {
 		return roundTrip.RoundTrip(r)
 	}
 
+//	fmt.Println("no match", f.getKey(*r))
+
 	return FourOFour(), nil
 }
 
@@ -97,6 +100,7 @@ func (f FakeRoundTripAgent) add(url, method string, roundTrip FakeRoundTrip) {
 
 	key :=	f.makeKey(url, method)
 	f.roundTrips[key] = roundTrip
+//	fmt.Println("cache len: ", len(f.roundTrips), key)
 }
 
 func (f FakeRoundTripAgent) makeKey(url, method string) string {
@@ -118,21 +122,20 @@ type FakeRoundTrip struct {
 
 func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	var statusCode int = f.statusCode
-	expectedURL, _ := url.Parse(f.url)
 
-	if !urlMatches(*r.URL, *expectedURL) {
+//	fmt.Println("URL1: ", r.URL, statusCode)
+	if !f.requestMatches(*r) {
+//		fmt.Println("URL2: ", r.URL, statusCode)
+
 		statusCode = 404
 		return FourOFour(), nil
 	}
 
-//	if (statusCode == 302) {
-//		redirectedURL := r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
-//		f.fakeRoundTripAgent.add(redirectedURL *****************)
+	if (statusCode == 302) {
+		redirectedURL := r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
 //		fmt.Println("URL reset to ", f.url, " for next req")
 //		fmt.Println("\n\n\n")
-//	}
-
-	expectedURL, _ = url.Parse(f.url)
+	}
 
 	resp := &http.Response {
 		Body:       NewFakeReadCloser(f.document),
@@ -143,8 +146,25 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func urlMatches(actual url.URL, expected url.URL) bool {
-	match := (actual.Scheme == expected.Scheme) && (actual.Host == expected.Host) && (actual.Path == expected.Path) && (actual.RawQuery == expected.RawQuery)
+func (f FakeRoundTrip) requestMatches(r http.Request) bool {
+	if (f.method != r.Method) {
+		fmt.Println("Method ", f.method, " does not match ", r.Method)
+		return false
+	}
+
+	actual, _ := url.Parse(f.url)
+	expected := r.URL
+
+	pathMatch := actual.Path == expected.Path
+//	fmt.Println("pathMatch: ", pathMatch)
+	schemeMatch := actual.Scheme == expected.Scheme
+//	fmt.Println("schemeMatch: ", schemeMatch)
+	hostMatch := actual.Host == expected.Host
+//	fmt.Println("hostMatch: ", hostMatch)
+	rawQueryMatch := actual.RawQuery == expected.RawQuery
+//	fmt.Println("rawQueryMatch: ", rawQueryMatch)
+	match := pathMatch && schemeMatch && hostMatch && rawQueryMatch
+
 	if match {
 		return true
 	}
@@ -158,6 +178,7 @@ func setDefaultLocationHeader(f *FakeRoundTrip) {
 }
 
 func FourOFour() *http.Response {
+	fmt.Println("****** 404")
 	resp := &http.Response {
 		Body:    NewFakeReadCloser("Unknown"),
 		StatusCode: 404,
