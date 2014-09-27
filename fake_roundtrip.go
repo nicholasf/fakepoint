@@ -1,58 +1,20 @@
-package fake_round_trip
+package fake_roundtrip
 
 import (
-	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"fmt"
 )
 
 const REDIRECTED_LOCATION = "/new-location/"
 
-func NewFakeClient() *FakeRoundTripClient {
-	fakeRoundTripAgent :=  NewFakeRoundTripAgent()
-	fakeClient := &FakeRoundTripClient{
-		fakeRoundTripAgent: fakeRoundTripAgent,
-	}
-
-	fakeClient.Transport = fakeRoundTripAgent
-	return fakeClient
-}
-
-type FakeRoundTripClient struct {
-	http.Client
+type FakeRoundTrip struct {
+	statusCode int
+	method     string
+	url        string
+	document   string
+	header 	*http.Header
 	fakeRoundTripAgent *FakeRoundTripAgent
-}
-
-func (f FakeRoundTripClient) AddTrip(method, url string, statusCode int, document string) *FakeRoundTrip {
-	fr := &FakeRoundTrip {
-		method:     method,
-		url:        url,
-		document:   document,
-		statusCode: statusCode,
-		header: &http.Header{},
-	}
-
-	f.fakeRoundTripAgent.add(url, method, *fr)
-	return fr
-}
-
-
-func (f FakeRoundTripClient) PlanGet(url string, statusCode int, document string) *FakeRoundTrip {
-	return f.AddTrip("GET", url, statusCode, document)
-}
-
-func (f FakeRoundTripClient) PlanPost(url string, statusCode int, document string) *FakeRoundTrip {
-	return f.AddTrip("POST", url, statusCode, document)
-}
-
-func (f FakeRoundTripClient) PlanPut(url string, statusCode int, document string) *FakeRoundTrip {
-	return f.AddTrip("PUT", url, statusCode, document)
-}
-
-func (f FakeRoundTripClient) PlanDelete(url string, statusCode int, document string) *FakeRoundTrip {
-	return f.AddTrip("DELETE", url, statusCode, document)
 }
 
 func (f FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
@@ -77,49 +39,6 @@ func (f FakeRoundTrip) SetURL(url string) *FakeRoundTrip {
 	return &f
 }
 
-func NewFakeRoundTripAgent() *FakeRoundTripAgent {
-	return &FakeRoundTripAgent{ roundTrips: make(map[string]http.RoundTripper) }
-}
-
-type FakeRoundTripAgent struct {
-	roundTrips map[string]http.RoundTripper
-}
-
-func (f FakeRoundTripAgent) RoundTrip(r *http.Request) (*http.Response, error) {
-	if roundTrip := f.roundTrips[f.getKey(*r)]; roundTrip != nil {
-		return roundTrip.RoundTrip(r)
-	}
-
-//	fmt.Println("no match", f.getKey(*r))
-
-	return FourOFour(), nil
-}
-
-func (f FakeRoundTripAgent) add(url, method string, roundTrip FakeRoundTrip) {
-	roundTrip.fakeRoundTripAgent = &f
-
-	key :=	f.makeKey(url, method)
-	f.roundTrips[key] = roundTrip
-//	fmt.Println("cache len: ", len(f.roundTrips), key)
-}
-
-func (f FakeRoundTripAgent) makeKey(url, method string) string {
-	return url + ":" + method
-}
-
-func (f FakeRoundTripAgent) getKey(r http.Request) string {
-	return r.URL.String() + ":" + r.Method
-}
-
-type FakeRoundTrip struct {
-	statusCode int
-	method     string
-	url        string
-	document   string
-	header 	*http.Header
-	fakeRoundTripAgent *FakeRoundTripAgent
-}
-
 func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	var statusCode int = f.statusCode
 
@@ -131,11 +50,10 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 		return FourOFour(), nil
 	}
 
-	if (statusCode == 302) {
-		redirectedURL := r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
+//	if (statusCode == 302) {
+//		redirectedURL := r.URL.Scheme + "://" + r.URL.Host + REDIRECTED_LOCATION
 //		fmt.Println("URL reset to ", f.url, " for next req")
 //		fmt.Println("\n\n\n")
-	}
 
 	resp := &http.Response {
 		Body:       NewFakeReadCloser(f.document),
@@ -185,20 +103,4 @@ func FourOFour() *http.Response {
 	}
 
 	return resp
-}
-
-func NewFakeReadCloser(body string) *FakeReadCloser {
-	fr := &FakeReadCloser{
-		Reader: strings.NewReader(body),
-	}
-
-	return fr
-}
-
-type FakeReadCloser struct {
-	io.Reader
-}
-
-func (f FakeReadCloser) Close() error {
-	return nil
 }

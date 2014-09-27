@@ -1,4 +1,4 @@
-package fake_round_trip
+package fake_roundtrip
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
