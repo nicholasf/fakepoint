@@ -2,7 +2,7 @@ WIP - nothing to read here yet.
 
 ## Fake-Roundtrip
 
-A http.Client that lets you associate URLs with roundtrips for http testing.
+Behaviours for faking endpoint URLs, response headers and bodies, using http.Roundtrippers via the http.Client
 
 ## Install
 

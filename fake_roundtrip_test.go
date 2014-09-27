@@ -9,13 +9,6 @@ import (
 
 func TestFakeRoundTrip(t *testing.T) {
 
-	Convey("Create a Fake Client, without a base domain", t, func() {
-		Convey("without a domain", func() {
-			client := NewFakeClient()
-			So(client, ShouldNotBeNil)
-		})
-	})
-
 	Convey("Basic DSL - planning roundtrips", t, func() {
 		client := NewFakeClient()
 
