@@ -82,12 +82,16 @@ func TestFakeRoundTrip(t *testing.T) {
 			So(resp.StatusCode, ShouldEqual, 200)
 		})
 
-//				Convey("the status code, with Location headers for 201, 202, 302", func() {
-//					client.PlanGet("abc.com", 302, "")
-//					resp, err := client.Get("abc.com")
-//					So(err, ShouldBeNil)
-//					So(resp.Header.Get("Location"), ShouldNotBeNil)
-//					So(resp.StatusCode, ShouldEqual, 302)
-//				})
+		Convey("the status code, with Location headers for 201, 202", func() {
+			codes := []int{ 201, 202 }
+
+			for _, code := range codes {
+				client.PlanGet("abc.com", code, "")
+				resp, err := client.Get("abc.com")
+				So(err, ShouldBeNil)
+				So(resp.Header.Get("Location"), ShouldNotBeNil)
+				So(resp.StatusCode, ShouldEqual, code)
+			}
+		})
 	})
 }
