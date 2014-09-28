@@ -1,10 +1,10 @@
 package fake_roundtrip
 
 import (
+	"bytes"
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"testing"
-	"bytes"
 )
 
 func TestFakeRoundTrip(t *testing.T) {
@@ -74,12 +74,20 @@ func TestFakeRoundTrip(t *testing.T) {
 	Convey("302s (following redirects)", t, func() {
 		client := NewFakeClient()
 
-		Convey("the status code, with Location headers for 201, 202, 302", func() {
+		Convey("302 generates an interal 200 for /new-location/ according to 302 rules", func() {
 			client.PlanGet("abc.com", 302, "")
 			resp, err := client.Get("abc.com")
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Location"), ShouldNotBeNil)
-			So(resp.StatusCode, ShouldEqual, 302)
+			So(resp.StatusCode, ShouldEqual, 200)
 		})
+
+//				Convey("the status code, with Location headers for 201, 202, 302", func() {
+//					client.PlanGet("abc.com", 302, "")
+//					resp, err := client.Get("abc.com")
+//					So(err, ShouldBeNil)
+//					So(resp.Header.Get("Location"), ShouldNotBeNil)
+//					So(resp.StatusCode, ShouldEqual, 302)
+//				})
 	})
 }

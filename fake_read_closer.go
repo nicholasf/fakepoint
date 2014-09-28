@@ -7,10 +7,10 @@ import (
 
 func NewFakeReadCloser(body string) *FakeReadCloser {
 	fr := &FakeReadCloser{
-	Reader: strings.NewReader(body),
-}
+		Reader: strings.NewReader(body),
+	}
 
-return fr
+	return fr
 }
 
 type FakeReadCloser struct {

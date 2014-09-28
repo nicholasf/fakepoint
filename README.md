@@ -1,3 +1,10 @@
+TODO 
+
+* 302s
+* add repetition settings - by default e.g. roundtrip only survives once, but it can otherwise survive n times.
+* default basedomain client
+
+
 WIP - nothing to read here yet.
 
 ## Fake-Roundtrip
@@ -32,3 +39,5 @@ Behaviours for faking endpoint URLs, response headers and bodies, using http.Rou
 WIP.
 
 Returns a client containing a fake round trip for mock http testing.
+
+
