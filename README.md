@@ -36,7 +36,8 @@ client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }
 You can chain further calls to set headers and increase the frequency of the endpoint:
 
 ``` golang
-client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json").Duplicate(1)
+trip := client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }")
+trip.SetHeader("Content-Type", "application/json").Duplicate(1)
 ```
 
 This call sets the Content-Type in the response header, and increases the amount of times the client will field this request by 1.
