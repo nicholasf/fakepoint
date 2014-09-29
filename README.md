@@ -15,7 +15,7 @@ client := NewFakeClient()
 client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
 resp, _ := client.Get("https://api.opsgenie.com/v1/json/alert")
 text, _ := ioutil.ReadAll(resp.Body)
-fmt.Println(text) //"{ "code\: 200 }"
+fmt.Println(text) // "{ \"code\": 200 }"
 fmt.Println(resp.Header.Get("Content-Type")) //"application/json"
 ```
 
