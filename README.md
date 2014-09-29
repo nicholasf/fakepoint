@@ -1,6 +1,6 @@
 ## Fake-Endpoint
 
-Hands you a http.Client that can mock HTTP endpoints, letting you specify the response data returned. 
+A http.Client that can mock HTTP endpoints, letting you specify the response data returned. 
 
 ## Install
 
