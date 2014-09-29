@@ -1,10 +1,10 @@
-## Fake-Roundtrip
+## Fake-Endpoint
 
 Hands you a http.Client that can mock HTTP endpoints, letting you specify the response data returned. 
 
 ## Install
 
-`go get github.com/nicholasf/go-fake-roundtrip`
+`go get github.com/nicholasf/go-fake-endpoint`
 
 ## Example
 
