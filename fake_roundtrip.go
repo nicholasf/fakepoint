@@ -1,7 +1,6 @@
 package fake_roundtrip
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 )
@@ -9,40 +8,45 @@ import (
 const REDIRECTED_LOCATION = "/new-location/"
 
 type FakeRoundTrip struct {
-	statusCode         int
-	method             string
-	url                string
-	document           string
-	header             *http.Header
-	fakeRoundTripAgent *FakeRoundTripAgent
+	statusCode  int
+	method      string
+	url         string
+	document    string
+	header      *http.Header
+	agent       *FakeRoundTripAgent
+	repetitions int
 }
 
-func (f FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
+func (f *FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
 	f.statusCode = code
 
 	locationRequired := code == 302 || code == 201 || code == 202
 
 	if locationRequired {
-		setDefaultLocationHeader(&f)
+		setDefaultLocationHeader(f)
 	}
 
-	return &f
+	return f
 }
 
-func (f FakeRoundTrip) SetHeader(key string, value string) *FakeRoundTrip {
+func (f *FakeRoundTrip) SetHeader(key string, value string) *FakeRoundTrip {
 	f.header.Set(key, value)
-	return &f
+	return f
 }
 
-func (f FakeRoundTrip) SetURL(url string) *FakeRoundTrip {
+func (f *FakeRoundTrip) SetURL(url string) *FakeRoundTrip {
 	f.url = url
-	return &f
+	return f
+}
+
+func (f *FakeRoundTrip) Duplicate(num int) *FakeRoundTrip {
+	f.agent.increaseCount(f.url, f.method, num)
+	return f
 }
 
 func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	var statusCode int = f.statusCode
 
-//	fmt.Println("roundtrip resolve: ", r.URL, statusCode)
 	if !f.requestMatches(*r) {
 		statusCode = 404
 		return FourOFour(), nil
@@ -50,9 +54,8 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 
 	if statusCode == 302 {
 		redirectURL := REDIRECTED_LOCATION
-		f.fakeRoundTripAgent.client.AddTrip(f.method, redirectURL, 200, "")
+		f.agent.client.AddTrip(f.method, redirectURL, 200, "")
 		setDefaultLocationHeader(&f)
-//		fmt.Println(rt.url, " for next req")
 	}
 
 	resp := &http.Response{
@@ -66,7 +69,6 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func (f FakeRoundTrip) requestMatches(r http.Request) bool {
 	if f.method != r.Method {
-		fmt.Println("Method ", f.method, " does not match ", r.Method)
 		return false
 	}
 
@@ -74,13 +76,9 @@ func (f FakeRoundTrip) requestMatches(r http.Request) bool {
 	expected := r.URL
 
 	pathMatch := actual.Path == expected.Path
-	//	fmt.Println("pathMatch: ", pathMatch)
 	schemeMatch := actual.Scheme == expected.Scheme
-	//	fmt.Println("schemeMatch: ", schemeMatch)
 	hostMatch := actual.Host == expected.Host
-	//	fmt.Println("hostMatch: ", hostMatch)
 	rawQueryMatch := actual.RawQuery == expected.RawQuery
-	//	fmt.Println("rawQueryMatch: ", rawQueryMatch)
 	match := pathMatch && schemeMatch && hostMatch && rawQueryMatch
 
 	if match {

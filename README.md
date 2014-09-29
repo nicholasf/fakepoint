@@ -1,43 +1,42 @@
-TODO 
-
-* 302s
-* add repetition settings - by default e.g. roundtrip only survives once, but it can otherwise survive n times.
-* default basedomain client
-
-
-WIP - nothing to read here yet.
-
 ## Fake-Roundtrip
 
-Behaviours for faking endpoint URLs, response headers and bodies, using http.Roundtrippers via the http.Client
+Hands you a http.Client that can mock HTTP endpoints, letting you specify the response data returned. 
 
 ## Install
 
 `go get github.com/nicholasf/go-fake-roundtrip`
 
 ## Example
-```
-    client := NewFakeClient()
 
-    Convey("it returns the document with a 200", func() {
-        client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetHeader("Content-Type", "text/plain")
+Use it to simulate a third party API in your tests. 
 
-        resp, _ := client.Get("https://api.opsgenie.com/v1/json/alert")
-        text, _ := ioutil.ReadAll(resp.Body)
-        So(string(text), ShouldEqual, "hello world")
-        So(resp.StatusCode, ShouldEqual, 200)
-        So(resp.Header.Get("Content-Type"), ShouldEqual, "text/plain")
-    })
-
+```golang
+client := NewFakeClient()
+client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
+resp, _ := client.Get("https://api.opsgenie.com/v1/json/alert")
+text, _ := ioutil.ReadAll(resp.Body)
+fmt.Println(text) //"{ "code\: 200 }"
+fmt.Println(resp.Header.Get("Content-Type")) //"application/json"
 ```
 
 ## Explanation
 
+First, set up the client.
 
+```golang
+client := NewFakeClient()
+```
 
+From here, set up an endpoint with `client.PlanGet`, `client.PlanPost`, `client.PlanPut`, or `client.PlanDlete` with the matching call on the client. Also specify the http status code you expect, and the final text document.
 
-WIP.
+```golang
+client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }")
+```
 
-Returns a client containing a fake round trip for mock http testing.
+You can chain further calls to set headers and increase the frequency of the endpoint:
 
+``` golang
+client.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json").Duplicate(1)
+```
 
+This call sets the Content-Type in the response header, and increases the amount of times the client will field this request by 1.

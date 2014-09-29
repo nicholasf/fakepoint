@@ -8,7 +8,6 @@ import (
 )
 
 func TestFakeRoundTrip(t *testing.T) {
-
 	Convey("Basic DSL - planning roundtrips", t, func() {
 		client := NewFakeClient()
 
@@ -83,7 +82,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 
 		Convey("the status code, with Location headers for 201, 202", func() {
-			codes := []int{ 201, 202 }
+			codes := []int{201, 202}
 
 			for _, code := range codes {
 				client.PlanGet("abc.com", code, "")
@@ -92,6 +91,30 @@ func TestFakeRoundTrip(t *testing.T) {
 				So(resp.Header.Get("Location"), ShouldNotBeNil)
 				So(resp.StatusCode, ShouldEqual, code)
 			}
+		})
+	})
+
+	Convey("Repetition of Endpoint default to a repetition of 1", t, func() {
+		client := NewFakeClient()
+
+		Convey("defaults to 1", func() {
+			client.PlanGet("abc.com", 200, "")
+			resp, err := client.Get("abc.com")
+			resp2, err := client.Get("abc.com")
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, 200)
+			So(resp2.StatusCode, ShouldEqual, 404)
+		})
+
+		Convey("is configurable", func() {
+			client.PlanGet("abc.com", 200, "").Duplicate(1)
+			resp, err := client.Get("abc.com")
+			resp2, err := client.Get("abc.com")
+			resp3, err := client.Get("abc.com")
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, 200)
+			So(resp2.StatusCode, ShouldEqual, 200)
+			So(resp3.StatusCode, ShouldEqual, 404)
 		})
 	})
 }

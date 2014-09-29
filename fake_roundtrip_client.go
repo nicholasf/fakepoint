@@ -5,18 +5,19 @@ import (
 )
 
 func NewFakeClient() *FakeRoundTripClient {
-	fakeRoundTripAgent := NewFakeRoundTripAgent()
+	agent := NewFakeRoundTripAgent()
 	fakeClient := &FakeRoundTripClient{
-		fakeRoundTripAgent: fakeRoundTripAgent,
+		agent: agent,
 	}
-	fakeRoundTripAgent.client = fakeClient
-	fakeClient.Transport = fakeRoundTripAgent
+
+	agent.client = fakeClient
+	fakeClient.Transport = agent
 	return fakeClient
 }
 
 type FakeRoundTripClient struct {
 	http.Client
-	fakeRoundTripAgent *FakeRoundTripAgent
+	agent *FakeRoundTripAgent
 }
 
 func (f FakeRoundTripClient) AddTrip(method, url string, statusCode int, document string) *FakeRoundTrip {
@@ -26,9 +27,10 @@ func (f FakeRoundTripClient) AddTrip(method, url string, statusCode int, documen
 		document:   document,
 		statusCode: statusCode,
 		header:     &http.Header{},
+		agent:      f.agent,
 	}
 
-	f.fakeRoundTripAgent.add(url, method, *fr)
+	f.agent.add(url, method, *fr)
 	return fr
 }
 
