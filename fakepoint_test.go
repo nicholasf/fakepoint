@@ -14,7 +14,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		Convey("it returns the document with a 200", func() {
 			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetHeader("Content-Type", "text/plain")
 
-			resp, _ := maker.Get("https://api.opsgenie.com/v1/json/alert")
+			resp, _ := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 			text, _ := ioutil.ReadAll(resp.Body)
 			So(string(text), ShouldEqual, "hello world")
 			So(resp.StatusCode, ShouldEqual, 200)
@@ -22,13 +22,13 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 
 		Convey("it doesnt resolve to the wrong URL", func() {
-			resp, _ := maker.Get("https://somethingelse.com")
+			resp, _ := maker.Client().Get("https://somethingelse.com")
 			So(resp.StatusCode, ShouldEqual, 404)
 		})
 
 		Convey("the header", func() {
 			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetHeader("Content-Type", "application/json")
-			resp, err := maker.Get("https://api.opsgenie.com/v1/json/alert")
+			resp, err := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Content-Type"), ShouldEqual, "application/json")
 		})
@@ -39,13 +39,13 @@ func TestFakeRoundTrip(t *testing.T) {
 		Convey("distinct URLs", func() {
 			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world")
 			maker.PlanGet("https://another.system.com", 200, "not with a bang but a whimper")
-			resp1, err := maker.Get("https://api.opsgenie.com/v1/json/alert")
+			resp1, err := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 			text, _ := ioutil.ReadAll(resp1.Body)
 			So(err, ShouldBeNil)
 			So(string(text), ShouldEqual, "hello world")
 			So(resp1.StatusCode, ShouldEqual, 200)
 
-			resp2, err2 := maker.Get("https://another.system.com")
+			resp2, err2 := maker.Client().Get("https://another.system.com")
 			text, _ = ioutil.ReadAll(resp2.Body)
 			So(err2, ShouldBeNil)
 			So(string(text), ShouldEqual, "not with a bang but a whimper")
@@ -56,13 +56,13 @@ func TestFakeRoundTrip(t *testing.T) {
 			maker.PlanPost("abc.com/greeting", 201, "hello world1")
 			maker.PlanGet("abc.com/greeting", 200, "hello world2")
 
-			resp1, err := maker.Post("abc.com/greeting", "application/text", bytes.NewReader([]byte{'g', 'o'}))
+			resp1, err := maker.Client().Post("abc.com/greeting", "application/text", bytes.NewReader([]byte{'g', 'o'}))
 			text, _ := ioutil.ReadAll(resp1.Body)
 			So(err, ShouldBeNil)
 			So(string(text), ShouldEqual, "hello world1")
 			So(resp1.StatusCode, ShouldEqual, 201)
 
-			resp2, err2 := maker.Get("abc.com/greeting")
+			resp2, err2 := maker.Client().Get("abc.com/greeting")
 			text, _ = ioutil.ReadAll(resp2.Body)
 			So(err2, ShouldBeNil)
 			So(string(text), ShouldEqual, "hello world2")
@@ -75,7 +75,7 @@ func TestFakeRoundTrip(t *testing.T) {
 
 		Convey("302 generates an interal 200 for /new-location/ according to 302 rules", func() {
 			maker.PlanGet("abc.com", 302, "")
-			resp, err := maker.Get("abc.com")
+			resp, err := maker.Client().Get("abc.com")
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Location"), ShouldNotBeNil)
 			So(resp.StatusCode, ShouldEqual, 200)
@@ -86,7 +86,7 @@ func TestFakeRoundTrip(t *testing.T) {
 
 			for _, code := range codes {
 				maker.PlanGet("abc.com", code, "")
-				resp, err := maker.Get("abc.com")
+				resp, err := maker.Client().Get("abc.com")
 				So(err, ShouldBeNil)
 				So(resp.Header.Get("Location"), ShouldNotBeNil)
 				So(resp.StatusCode, ShouldEqual, code)
@@ -99,8 +99,8 @@ func TestFakeRoundTrip(t *testing.T) {
 
 		Convey("defaults to 1", func() {
 			maker.PlanGet("abc.com", 200, "")
-			resp, err := maker.Get("abc.com")
-			resp2, err := maker.Get("abc.com")
+			resp, err := maker.Client().Get("abc.com")
+			resp2, err := maker.Client().Get("abc.com")
 			So(err, ShouldBeNil)
 			So(resp.StatusCode, ShouldEqual, 200)
 			So(resp2.StatusCode, ShouldEqual, 404)
@@ -108,9 +108,9 @@ func TestFakeRoundTrip(t *testing.T) {
 
 		Convey("is configurable", func() {
 			maker.PlanGet("abc.com", 200, "").Duplicate(1)
-			resp, err := maker.Get("abc.com")
-			resp2, err := maker.Get("abc.com")
-			resp3, err := maker.Get("abc.com")
+			resp, err := maker.Client().Get("abc.com")
+			resp2, err := maker.Client().Get("abc.com")
+			resp3, err := maker.Client().Get("abc.com")
 			So(err, ShouldBeNil)
 			So(resp.StatusCode, ShouldEqual, 200)
 			So(resp2.StatusCode, ShouldEqual, 200)

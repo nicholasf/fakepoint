@@ -12,7 +12,7 @@ func NewAgent() *Agent {
 }
 
 type Agent struct {
-	client          *FakepointMaker
+	maker          *FakepointMaker
 	fakepoints      map[string]http.RoundTripper
 	fakepointsCount map[string]int
 }

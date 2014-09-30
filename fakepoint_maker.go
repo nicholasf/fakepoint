@@ -6,21 +6,19 @@ import (
 
 func NewFakepointMaker() *FakepointMaker {
 	agent := NewAgent()
-	fakeClient := &FakepointMaker{
+	maker := &FakepointMaker{
 		agent: agent,
 	}
 
-	agent.client = fakeClient
-	fakeClient.Transport = agent
-	return fakeClient
+	agent.maker = maker
+	return maker
 }
 
 type FakepointMaker struct {
-	http.Client
 	agent *Agent
 }
 
-func (f FakepointMaker) client() *http.Client {
+func (f FakepointMaker) Client() *http.Client {
 	return &http.Client{ Transport: f.agent }
 }
 

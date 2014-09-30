@@ -17,7 +17,7 @@ Use it to simulate a third party API in your tests.
 ```golang
 maker := NewFakepointMaker()
 maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
-client := maker.client()
+client := maker.Client()
 resp, _ := client.Get("https://api.opsgenie.com/v1/json/alert")
 text, _ := ioutil.ReadAll(resp.Body)
 fmt.Println(text) // "{ \"code\": 200 }"
@@ -52,7 +52,7 @@ This call sets the Content-Type in the response header, and increases the amount
 Finally, get the http.Client from the FakepointMaker:
 
 ```golang
-client := maker.client()
+client := maker.Client()
 ```
 
 Golang's HTTP design makes setting up fake URLs very easy. Fakepoint simply sets up a `http.Roundtripper` implementation that resolves HTTP requests against a map of fake endpoints. Voila!
