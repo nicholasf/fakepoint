@@ -53,8 +53,7 @@ func (f Fakepoint) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 
 	if statusCode == 302 {
-		redirectURL := REDIRECTED_LOCATION
-		f.agent.client.AddTrip(f.method, redirectURL, 200, "")
+		f.agent.client.AddTrip(f.method, REDIRECTED_LOCATION, 200, "")
 		setDefaultLocationHeader(&f)
 	}
 

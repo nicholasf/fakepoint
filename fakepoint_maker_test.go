@@ -17,7 +17,7 @@ func TestFakepointMaker(t *testing.T) {
 		maker := NewFakepointMaker()
 		maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world")
 
-		resp, err := maker.httpClient().Get("https://api.opsgenie.com/v1/json/alert")
+		resp, err := maker.client().Get("https://api.opsgenie.com/v1/json/alert")
 		text, err := ioutil.ReadAll(resp.Body)
 		So(err, ShouldBeNil)
 		So(string(text), ShouldEqual, "hello world")
