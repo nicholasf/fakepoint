@@ -1,4 +1,4 @@
-package fake_roundtrip
+package fakepoint
 
 import (
 	"net/http"
@@ -7,17 +7,17 @@ import (
 
 const REDIRECTED_LOCATION = "/new-location/"
 
-type FakeRoundTrip struct {
+type Fakepoint struct {
 	statusCode  int
 	method      string
 	url         string
 	document    string
 	header      *http.Header
-	agent       *FakeRoundTripAgent
+	agent       *Agent
 	repetitions int
 }
 
-func (f *FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
+func (f *Fakepoint) SetStatusCode(code int) *Fakepoint {
 	f.statusCode = code
 
 	locationRequired := code == 302 || code == 201 || code == 202
@@ -29,22 +29,22 @@ func (f *FakeRoundTrip) SetStatusCode(code int) *FakeRoundTrip {
 	return f
 }
 
-func (f *FakeRoundTrip) SetHeader(key string, value string) *FakeRoundTrip {
+func (f *Fakepoint) SetHeader(key string, value string) *Fakepoint {
 	f.header.Set(key, value)
 	return f
 }
 
-func (f *FakeRoundTrip) SetURL(url string) *FakeRoundTrip {
+func (f *Fakepoint) SetURL(url string) *Fakepoint {
 	f.url = url
 	return f
 }
 
-func (f *FakeRoundTrip) Duplicate(num int) *FakeRoundTrip {
+func (f *Fakepoint) Duplicate(num int) *Fakepoint {
 	f.agent.increaseCount(f.url, f.method, num)
 	return f
 }
 
-func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
+func (f Fakepoint) RoundTrip(r *http.Request) (*http.Response, error) {
 	var statusCode int = f.statusCode
 
 	if !f.requestMatches(*r) {
@@ -59,7 +59,7 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 
 	resp := &http.Response{
-		Body:       NewFakeReadCloser(f.document),
+		Body:       NewReadCloser(f.document),
 		StatusCode: statusCode,
 		Header:     *f.header,
 	}
@@ -67,7 +67,7 @@ func (f FakeRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func (f FakeRoundTrip) requestMatches(r http.Request) bool {
+func (f Fakepoint) requestMatches(r http.Request) bool {
 	if f.method != r.Method {
 		return false
 	}
@@ -89,13 +89,13 @@ func (f FakeRoundTrip) requestMatches(r http.Request) bool {
 }
 
 //per handle location headers: http://en.wikipedia.org/wiki/HTTP_location
-func setDefaultLocationHeader(f *FakeRoundTrip) {
+func setDefaultLocationHeader(f *Fakepoint) {
 	f.SetHeader("Location", REDIRECTED_LOCATION)
 }
 
 func FourOFour() *http.Response {
 	resp := &http.Response{
-		Body:       NewFakeReadCloser("Unknown"),
+		Body:       NewReadCloser("Unknown"),
 		StatusCode: 404,
 	}
 
