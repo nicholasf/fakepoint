@@ -59,7 +59,7 @@ Golang's HTTP design makes setting up fake URLs very easy. Fakepoint simply sets
 
 Fakepoint will cleanly handle 302s by following redirects, and supplying a 'new-location' resource to automate the follows.
 
-Mostly written in Santa Monica, 2014, while working for Rockpool Labs.
+Mostly written in Santa Monica, L.A., 2014, while working for Rockpool Labs.
 
 ## License
 
