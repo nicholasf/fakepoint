@@ -61,6 +61,22 @@ Fakepoint will cleanly handle 302s by following redirects, and supplying a 'new-
 
 Mostly written in Santa Monica, L.A., 2014, while working for Rockpool Labs.
 
+##FAQs
+
+"What's the benefit of fakepoint over http://golang.org/pkg/net/http/httptest?"
+
+The [httptest](http://golang.org/pkg/net/http/httptest/) package provides an easy to set up HTTP server for testing. 
+
+I wanted to specify particular URLs, and to write tests to assert that they were called. 
+
+I've used tools like [nock](https://github.com/pgte/nock), [fakeweb](https://github.com/chrisk/fakeweb), etc. in other languages and I wanted something similar.
+
+In particular, I see myself writing a lot of integration code against 3rd party HTTP services, and I want a nice DSL in my tests to prove my code works.
+
+"Can I do transfer-coding = "chunked" and get nice responses?"
+
+Not yet, but that'd be grand. I might get around to it if I ever need it.
+
 ## License
 
 Super open.
