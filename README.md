@@ -4,7 +4,7 @@ Fakepoint - Fake Endpoint
 
 Create Fake endpoints for HTTP testing. Specify the response data sent back.
 
-Godocs (here)[http://godoc.org/github.com/nicholasf/fakepoint]
+[Godocs](http://godoc.org/github.com/nicholasf/fakepoint)
 
 ## Install
 
