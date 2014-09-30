@@ -71,7 +71,30 @@ I wanted to specify particular URLs, and to write tests to assert that they were
 
 I've used tools like [nock](https://github.com/pgte/nock), [fakeweb](https://github.com/chrisk/fakeweb), etc. in other languages and I wanted something similar.
 
-In particular, I see myself writing a lot of integration code against 3rd party HTTP services, and I want a nice DSL in my tests to prove my code works.
+In particular, I see myself writing a lot of integration code against 3rd party HTTP services, and I want a nice DSL in my tests to prove my code works. All I have to do is expose the call to the client and it's suddenly very testable:
+
+```golang
+package notifications_test
+
+import (
+	. "github.com/smartystreets/goconvey/convey"
+	"testing"
+	"github.com/nicholasf/fakepoint"
+	"allocation/notifications"
+)
+
+func TestOpsgenie(t *testing.T) {
+	Convey("An Error log is sent to the notifier", t, func() {
+		maker := fakepoint.NewFakepointMaker()
+		maker.PlanPost("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }")
+		resp, err := notifications.Requester(*maker.Client(), ("https://api.opsgenie.com/v1/json/alert"), []byte(``))
+		So(err, ShouldBeNil)
+		So(resp.StatusCode, ShouldEqual, 200)
+	})
+}
+
+
+```
 
 "Can I do transfer-coding = "chunked" and get nice responses?"
 
