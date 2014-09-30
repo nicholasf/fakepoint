@@ -65,9 +65,9 @@ Mostly written in Santa Monica, L.A., 2014, while working for Rockpool Labs.
 
 "What's the benefit of fakepoint over http://golang.org/pkg/net/http/httptest?"
 
-The [httptest](http://golang.org/pkg/net/http/httptest/) package provides an easy to set up HTTP server for testing. 
+The [httptest](http://golang.org/pkg/net/http/httptest/) package provides an easy to set up HTTP server for testing and a ResponseRecorder. 
 
-I wanted to specify particular URLs, and to write tests to assert that they were called. 
+I wanted something different: to specify particular URLs, and to write tests to assert that they were called. With the HTTP Server I couldn't specify the URL and with the ResponseRecorder I had to implement a HTTP handler, etc..
 
 I've used tools like [nock](https://github.com/pgte/nock), [fakeweb](https://github.com/chrisk/fakeweb), etc. in other languages and I wanted something similar.
 
@@ -92,7 +92,6 @@ func TestOpsgenie(t *testing.T) {
 		So(resp.StatusCode, ShouldEqual, 200)
 	})
 }
-
 
 ```
 
