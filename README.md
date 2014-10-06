@@ -17,26 +17,20 @@ Use it to simulate a third party API in your tests.
 ```golang
 maker := NewFakepointMaker()
 maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
-client := maker.Client()
-resp, _ := client.Get("https://api.opsgenie.com/v1/json/alert")
-
-text, _ := ioutil.ReadAll(resp.Body)
-fmt.Println(text) // "{ \"code\": 200 }"
-fmt.Println(resp.Header.Get("Content-Type")) //"application/json"
+resp, _ := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 ```
 
 ## Rationale
 
 After looking at `httptest.ResponseRecorder` I decided it was a bit verbose. I wanted a tidier DSL similar to [Fakeweb](https://github.com/chrisk/fakeweb) and [nock](https://github.com/pgte/nock).
 
-I based my approach about the `http.Client`. Fakepoint lets you stub HTTP calls then delivers you a regular client to use.
+I based my approach about the `http.Client`. The Fakepoint maker lets you stub HTTP calls then `maker.Client()` returns a standard client to use.
 
 From here you can execute a request by running a HTTP verb function call on the client:
 
 ```
 maker.PlanGet("http://abc.com", 200, "")
 resp, err := maker.Client().Get("http://abc.com")
-
 ```
 Or passing in a request to client.Do(req):
 
@@ -44,7 +38,6 @@ Or passing in a request to client.Do(req):
 maker.PlanGet("http://example.com", 200, "")
 req, err := http.NewRequest("GET", "http://example.com", nil)
 resp, err := maker.Client().Do(req)
-
 ```
 
 ## How to use
