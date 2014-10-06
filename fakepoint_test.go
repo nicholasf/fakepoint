@@ -5,6 +5,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"testing"
+	"net/http"
 )
 
 func TestFakeRoundTrip(t *testing.T) {
@@ -27,7 +28,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 
 		Convey("the header", func() {
-			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetHeader("Content-Type", "application/json")
+			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
 			resp, err := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Content-Type"), ShouldEqual, "application/json")
@@ -98,23 +99,32 @@ func TestFakeRoundTrip(t *testing.T) {
 		maker := NewFakepointMaker()
 
 		Convey("defaults to 1", func() {
-			maker.PlanGet("abc.com", 200, "")
-			resp, err := maker.Client().Get("abc.com")
-			resp2, err := maker.Client().Get("abc.com")
+			maker.PlanGet("http://abc.com", 200, "")
+			resp, err := maker.Client().Get("http://abc.com")
+			resp2, err := maker.Client().Get("http://abc.com")
 			So(err, ShouldBeNil)
 			So(resp.StatusCode, ShouldEqual, 200)
 			So(resp2.StatusCode, ShouldEqual, 404)
 		})
 
 		Convey("is configurable", func() {
-			maker.PlanGet("abc.com", 200, "").Duplicate(1)
-			resp, err := maker.Client().Get("abc.com")
-			resp2, err := maker.Client().Get("abc.com")
-			resp3, err := maker.Client().Get("abc.com")
+			maker.PlanGet("http://abc.com", 200, "").Duplicate(1)
+			resp, err := maker.Client().Get("http://abc.com")
+			resp2, err := maker.Client().Get("http://abc.com")
+			resp3, err := maker.Client().Get("http://abc.com")
 			So(err, ShouldBeNil)
 			So(resp.StatusCode, ShouldEqual, 200)
 			So(resp2.StatusCode, ShouldEqual, 200)
 			So(resp3.StatusCode, ShouldEqual, 404)
 		})
+	})
+
+	Convey("It works with a Request object", t, func() {
+		maker := NewFakepointMaker()
+		maker.PlanGet("http://example.com", 200, "")
+		req, err := http.NewRequest("GET", "http://example.com", nil)
+		resp, err := maker.Client().Do(req)
+		So(err, ShouldBeNil)
+		So(resp.StatusCode, ShouldEqual, 200)
 	})
 }

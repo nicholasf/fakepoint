@@ -24,8 +24,11 @@ fmt.Println(text) // "{ \"code\": 200 }"
 fmt.Println(resp.Header.Get("Content-Type")) //"application/json"
 ```
 
-## Explanation
+## Rationale
 
+After looking at `httptest.ResponseRecorder` I decided it was a bit verbose. I wanted a tidier DSL similar to [Fakeweb](https://github.com/chrisk/fakeweb) and [nock](https://github.com/pgte/nock).
+
+## How to use
 First, set up the FakepointMaker.
 
 ```golang
@@ -55,7 +58,23 @@ Finally, get the http.Client from the FakepointMaker:
 client := maker.Client()
 ```
 
-Golang's HTTP design makes setting up fake URLs very easy. Fakepoint simply sets up a `http.Roundtripper` implementation that resolves HTTP requests against a map of fake endpoints. Voila!
+This is the regular golang http.Client, with the Roundtripper Transport swapped out to something that can facilitate the test.
+
+From here you can execute a request by running a HTTP verb function call on the client:
+
+```
+maker.PlanGet("http://abc.com", 200, "")
+resp, err := maker.Client().Get("http://abc.com")
+
+```
+Or passing in a request to client.Do(req):
+
+```
+maker.PlanGet("http://example.com", 200, "")
+req, err := http.NewRequest("GET", "http://example.com", nil)
+resp, err := maker.Client().Do(req)
+
+```
 
 Fakepoint will cleanly handle 302s by following redirects, and supplying a 'new-location' resource to automate the follows.
 
