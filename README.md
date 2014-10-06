@@ -24,7 +24,7 @@ resp, _ := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 
 After looking at `httptest.ResponseRecorder` I decided it was a bit verbose. I wanted a tidier DSL similar to [Fakeweb](https://github.com/chrisk/fakeweb) and [nock](https://github.com/pgte/nock).
 
-I based my approach about the `http.Client`. The Fakepoint maker lets you stub HTTP calls then `maker.Client()` returns a standard client to use.
+I based my approach about the `http.Client`. The Fakepoint maker lets you stub URLs then calling `maker.Client()` returns a standard client to use.
 
 From here you can execute a request by running a HTTP verb function call on the client:
 
