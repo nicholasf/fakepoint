@@ -121,10 +121,12 @@ func TestFakeRoundTrip(t *testing.T) {
 
 	Convey("It works with a Request object", t, func() {
 		maker := NewFakepointMaker()
-		maker.PlanGet("http://example.com", 200, "")
+		maker.PlanGet("http://example.com", 200, "hello world")
 		req, err := http.NewRequest("GET", "http://example.com", nil)
 		resp, err := maker.Client().Do(req)
+		text, _ := ioutil.ReadAll(resp.Body)
 		So(err, ShouldBeNil)
+		So(string(text), ShouldEqual, "hello world")
 		So(resp.StatusCode, ShouldEqual, 200)
 	})
 }
