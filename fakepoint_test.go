@@ -35,6 +35,35 @@ func TestFakeRoundTrip(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Content-Type"), ShouldEqual, "application/json")
 		})
+
+		Convey("it returns errors when asked", func() {
+			Convey("it returns proper http error codes when used", func() {
+				maker.NewBadRequest("https://api.opsgenie.com/v1/json/alert", "GET")
+				resp, err := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
+				So(err, ShouldBeNil)
+				So(resp.StatusCode, ShouldEqual, 400)
+
+				maker.NewForbidden("https://api.opsgenie.com/v1/json/alert", "GET")
+				resp, err = maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
+				So(err, ShouldBeNil)
+				So(resp.StatusCode, ShouldEqual, 403)
+
+				maker.NewUnauthorized("https://api.opsgenie.com/v1/json/alert", "GET")
+				resp, err = maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
+				So(err, ShouldBeNil)
+				So(resp.StatusCode, ShouldEqual, 401)
+
+				maker.NewNotFound("https://api.opsgenie.com/v1/json/alert", "GET")
+				resp, err = maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
+				So(err, ShouldBeNil)
+				So(resp.StatusCode, ShouldEqual, 404)
+
+				maker.NewInternalError("https://api.opsgenie.com/v1/json/alert", "GET")
+				resp, err = maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
+				So(err, ShouldBeNil)
+				So(resp.StatusCode, ShouldEqual, 500)
+			})
+		})
 	})
 
 	Convey("Specify the response document", t, func() {

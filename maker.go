@@ -50,3 +50,23 @@ func (f FakepointMaker) NewPut(url string, statusCode int) *Fakepoint {
 func (f FakepointMaker) NewDelete(url string, statusCode int) *Fakepoint {
 	return f.AddTrip("DELETE", url, statusCode)
 }
+
+func (f FakepointMaker) NewBadRequest(url, method string) *Fakepoint {
+	return f.AddTrip(method, url, 400)
+}
+
+func (f FakepointMaker) NewUnauthorized(url, method string) *Fakepoint {
+	return f.AddTrip(method, url, 401)
+}
+
+func (f FakepointMaker) NewForbidden(url, method string) *Fakepoint {
+	return f.AddTrip(method, url, 403)
+}
+
+func (f FakepointMaker) NewNotFound(url, method string) *Fakepoint {
+	return f.AddTrip(method, url, 404)
+}
+
+func (f FakepointMaker) NewInternalError(url, method string) *Fakepoint {
+	return f.AddTrip(method, url, 500)
+}
