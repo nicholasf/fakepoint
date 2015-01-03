@@ -27,7 +27,7 @@ Use it to simulate a third party API in your tests.
 
 ```golang
 maker := NewFakepointMaker()
-maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
+maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse( "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
 resp, _ := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 ```
 
