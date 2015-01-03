@@ -7,7 +7,6 @@ import (
 )
 
 func TestFakepointMaker(t *testing.T) {
-
 	Convey("Create a Fake Client", t, func() {
 		maker := NewFakepointMaker()
 		So(maker, ShouldNotBeNil)
@@ -15,7 +14,7 @@ func TestFakepointMaker(t *testing.T) {
 
 	Convey("Create a http.Client", t, func() {
 		maker := NewFakepointMaker()
-		maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world")
+		maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse("hello world")
 
 		resp, err := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 		text, err := ioutil.ReadAll(resp.Body)
