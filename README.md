@@ -40,13 +40,13 @@ I based my approach about the `http.Client`. The Fakepoint maker lets you stub U
 From here you can execute a request by running a HTTP verb function call on the client:
 
 ```
-maker.PlanGet("http://abc.com", 200, "")
+maker.NewGet("http://abc.com", 200).SetResponse("")
 resp, err := maker.Client().Get("http://abc.com")
 ```
 Or passing in a request to client.Do(req):
 
 ```
-maker.PlanGet("http://example.com", 200, "")
+maker.NewGet("http://example.com", 200).SetResponse("")
 req, err := http.NewRequest("GET", "http://example.com", nil)
 resp, err := maker.Client().Do(req)
 ```
@@ -61,7 +61,7 @@ maker := NewFakepointMaker()
 From here, set up an endpoint with `maker.NewGet`, `maker.NewPost`, `maker.NewPut`, or `maker.NewDelete`. Also specify the http status code you expect.
 
 ```golang
-fakepoint := maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200)
+fakepoint := maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200)
 ```
 
 Response data to be returned may be set with one of two methods on the fakepoint; `SetResponse(..)` or `SetResponseDocument(..)`:
@@ -71,14 +71,14 @@ Response data to be returned may be set with one of two methods on the fakepoint
 	fakepoint.SetResponseDocument("./response.json") //response loads the file using ioutil.ReadFile
 ```
 
-Note, that Fakepoints using chaining. So you could've just written `maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse( "{ \"code\": 200 }")`
+Note, that Fakepoints using chaining. So you could've just written `maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse("{ \"code\": 200 }")`
 
 This is, perhaps, unidiomatic Golang; in hindsight the [Must pattern](http://golang.org/pkg/text/template/#Must) would have been more appropriate. C'est la vie.
 
 You can chain further calls to set headers and increase the frequency of the endpoint:
 
 ``` golang
-trip := maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200)
+trip := maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200)
 trip.SetResponse( "{ \"code\": 200 }").SetHeader("Content-Type", "application/json").Duplicate(1)
 ```
 
@@ -123,7 +123,7 @@ import (
 func TestOpsgenie(t *testing.T) {
 	Convey("An Error log is sent to the notifier", t, func() {
 		maker := fakepoint.NewFakepointMaker()
-		maker.PlanPost("https://api.opsgenie.com/v1/json/alert", 200).SetResponse( "{ \"code\": 200 }")
+		maker.NewPost("https://api.opsgenie.com/v1/json/alert", 200).SetResponse("{ \"code\": 200 }")
 		resp, err := notifications.Requester(*maker.Client(), ("https://api.opsgenie.com/v1/json/alert"), []byte(``))
 		So(err, ShouldBeNil)
 		So(resp.StatusCode, ShouldEqual, 200)
@@ -138,4 +138,4 @@ Not yet, but that'd be grand. I might get around to it if I ever need it.
 
 ## License
 
-Super open.
+MIT
