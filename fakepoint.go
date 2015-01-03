@@ -3,6 +3,7 @@ package fakepoint
 import (
 	"net/http"
 	"net/url"
+	"io/ioutil"
 )
 
 const REDIRECTED_LOCATION = "/new-location/"
@@ -44,6 +45,22 @@ func (f *Fakepoint) Duplicate(num int) *Fakepoint {
 	return f
 }
 
+func (f *Fakepoint) SetResponse(response string) *Fakepoint {
+	f.document = response
+	return f
+}
+
+func (f *Fakepoint) SetResponseDocument(filepath string) *Fakepoint {
+	data, err := ioutil.ReadFile(filepath)
+
+	if err != nil {
+		panic(err)
+	}
+
+	f.document =  string(data)
+	return f
+}
+
 func (f Fakepoint) RoundTrip(r *http.Request) (*http.Response, error) {
 	var statusCode int = f.statusCode
 
@@ -53,7 +70,7 @@ func (f Fakepoint) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 
 	if statusCode == 302 {
-		f.agent.maker.AddTrip(f.method, REDIRECTED_LOCATION, 200, "")
+		f.agent.maker.AddTrip(f.method, REDIRECTED_LOCATION, 200).SetResponse("")
 		setDefaultLocationHeader(&f)
 	}
 

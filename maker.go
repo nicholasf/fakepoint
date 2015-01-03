@@ -22,32 +22,31 @@ func (f FakepointMaker) Client() *http.Client {
 	return &http.Client{ Transport: f.agent }
 }
 
-func (f FakepointMaker) AddTrip(method, url string, statusCode int, document string) *Fakepoint {
+func (f FakepointMaker) AddTrip(method, url string, statusCode int) *Fakepoint {
 	fr := &Fakepoint{
 		method:     method,
 		url:        url,
-		document:   document,
 		statusCode: statusCode,
 		header:     &http.Header{},
 		agent:      f.agent,
 	}
 
-	f.agent.add(url, method, *fr)
+	f.agent.add(url, method, fr)
 	return fr
 }
 
-func (f FakepointMaker) PlanGet(url string, statusCode int, document string) *Fakepoint {
-	return f.AddTrip("GET", url, statusCode, document)
+func (f FakepointMaker) NewGet(url string, statusCode int) *Fakepoint {
+	return f.AddTrip("GET", url, statusCode)
 }
 
-func (f FakepointMaker) PlanPost(url string, statusCode int, document string) *Fakepoint {
-	return f.AddTrip("POST", url, statusCode, document)
+func (f FakepointMaker) NewPost(url string, statusCode int) *Fakepoint {
+	return f.AddTrip("POST", url, statusCode)
 }
 
-func (f FakepointMaker) PlanPut(url string, statusCode int, document string) *Fakepoint {
-	return f.AddTrip("PUT", url, statusCode, document)
+func (f FakepointMaker) NewPut(url string, statusCode int) *Fakepoint {
+	return f.AddTrip("PUT", url, statusCode)
 }
 
-func (f FakepointMaker) PlanDelete(url string, statusCode int, document string) *Fakepoint {
-	return f.AddTrip("DELETE", url, statusCode, document)
+func (f FakepointMaker) NewDelete(url string, statusCode int) *Fakepoint {
+	return f.AddTrip("DELETE", url, statusCode)
 }

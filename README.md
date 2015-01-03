@@ -10,6 +10,17 @@ Create Fake endpoints for HTTP testing. Specify the response data sent back.
 
 `go get github.com/nicholasf/fakepoint`
 
+
+## Tests
+
+`go test`
+
+## Changelog
+
+* 324780a16382aa8f390ed549e81c79a3a7048af9 (3/1/15)
+
+Breaking change to previous DSL. FakepointMaker now uses `NewGet` instead of `PlanGet`. Fakepoints can now be given files *or* strings for response data - `SetResponse` or `SetResponseData`.
+
 ## Example
 
 Use it to simulate a third party API in your tests. 
@@ -47,17 +58,28 @@ First, set up the FakepointMaker.
 maker := NewFakepointMaker()
 ```
 
-From here, set up an endpoint with `maker.PlanGet`, `maker.PlanPost`, `maker.PlanPut`, or `maker.PlanDelete`. Also specify the http status code you expect, and the final text document.
+From here, set up an endpoint with `maker.NewGet`, `maker.NewPost`, `maker.NewPut`, or `maker.NewDelete`. Also specify the http status code you expect.
 
 ```golang
-maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }")
+fakepoint := maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200)
 ```
+
+Response data to be returned may be set with one of two methods on the fakepoint; `SetResponse(..)` or `SetResponseDocument(..)`:
+
+```golang
+	fakepoint.SetResponse( "{ \"code\": 200 }") //response uses the a string
+	fakepoint.SetResponseDocument("./response.json") //response loads the file using ioutil.ReadFile
+```
+
+Note, that Fakepoints using chaining. So you could've just written `maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse( "{ \"code\": 200 }")`
+
+This is, perhaps, unidiomatic Golang; in hindsight the [Must pattern](http://golang.org/pkg/text/template/#Must) would have been more appropriate. C'est la vie.
 
 You can chain further calls to set headers and increase the frequency of the endpoint:
 
 ``` golang
-trip := maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }")
-trip.SetHeader("Content-Type", "application/json").Duplicate(1)
+trip := maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200)
+trip.SetResponse( "{ \"code\": 200 }").SetHeader("Content-Type", "application/json").Duplicate(1)
 ```
 
 Fakepoints only have a lifetime of one request *unless* `Duplicate` is used to specify additional call lifetimes.
@@ -101,7 +123,7 @@ import (
 func TestOpsgenie(t *testing.T) {
 	Convey("An Error log is sent to the notifier", t, func() {
 		maker := fakepoint.NewFakepointMaker()
-		maker.PlanPost("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }")
+		maker.PlanPost("https://api.opsgenie.com/v1/json/alert", 200).SetResponse( "{ \"code\": 200 }")
 		resp, err := notifications.Requester(*maker.Client(), ("https://api.opsgenie.com/v1/json/alert"), []byte(``))
 		So(err, ShouldBeNil)
 		So(resp.StatusCode, ShouldEqual, 200)

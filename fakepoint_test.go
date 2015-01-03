@@ -8,18 +8,20 @@ import (
 	"net/http"
 )
 
+const foo = "hello world"
+
 func TestFakeRoundTrip(t *testing.T) {
 	Convey("Basic DSL - planning roundtrips", t, func() {
 		maker := NewFakepointMaker()
 
 		Convey("it returns the document with a 200", func() {
-			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world").SetHeader("Content-Type", "text/plain")
+			maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetHeader("Content-Type", "text/plain").SetResponse(foo)
 
 			resp, _ := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 			text, _ := ioutil.ReadAll(resp.Body)
+			So(resp.Header.Get("Content-Type"), ShouldEqual, "text/plain")
 			So(string(text), ShouldEqual, "hello world")
 			So(resp.StatusCode, ShouldEqual, 200)
-			So(resp.Header.Get("Content-Type"), ShouldEqual, "text/plain")
 		})
 
 		Convey("it doesnt resolve to the wrong URL", func() {
@@ -28,18 +30,27 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 
 		Convey("the header", func() {
-			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
+			maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetHeader("Content-Type", "application/json").SetResponse("{ \"code\": 200 }")
 			resp, err := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Content-Type"), ShouldEqual, "application/json")
 		})
 	})
 
+	Convey("Specify the response document", t, func() {
+		maker := NewFakepointMaker()
+		maker.NewGet("http://abc.com", 200).SetResponseDocument("./README.md")
+		resp, err := maker.Client().Get("http://abc.com")
+		text, _ := ioutil.ReadAll(resp.Body)
+		So(err, ShouldBeNil)
+		So(string(text), ShouldContainSubstring, "Create Fake endpoints for HTTP testing. Specify the response data sent back.")
+	})
+
 	Convey("The maker handles multiple fake round trips", t, func() {
 		maker := NewFakepointMaker()
 		Convey("distinct URLs", func() {
-			maker.PlanGet("https://api.opsgenie.com/v1/json/alert", 200, "hello world")
-			maker.PlanGet("https://another.system.com", 200, "not with a bang but a whimper")
+			maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse("hello world")
+			maker.NewGet("https://another.system.com", 200).SetResponse("not with a bang but a whimper")
 			resp1, err := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 			text, _ := ioutil.ReadAll(resp1.Body)
 			So(err, ShouldBeNil)
@@ -54,8 +65,8 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 
 		Convey("Identical URLs, different HTTP methods", func() {
-			maker.PlanPost("abc.com/greeting", 201, "hello world1")
-			maker.PlanGet("abc.com/greeting", 200, "hello world2")
+			maker.NewPost("abc.com/greeting", 201).SetResponse("hello world1")
+			maker.NewGet("abc.com/greeting", 200).SetResponse("hello world2")
 
 			resp1, err := maker.Client().Post("abc.com/greeting", "application/text", bytes.NewReader([]byte{'g', 'o'}))
 			text, _ := ioutil.ReadAll(resp1.Body)
@@ -75,7 +86,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		maker := NewFakepointMaker()
 
 		Convey("302 generates an interal 200 for /new-location/ according to 302 rules", func() {
-			maker.PlanGet("abc.com", 302, "")
+			maker.NewGet("abc.com", 302).SetResponse("")
 			resp, err := maker.Client().Get("abc.com")
 			So(err, ShouldBeNil)
 			So(resp.Header.Get("Location"), ShouldNotBeNil)
@@ -86,7 +97,7 @@ func TestFakeRoundTrip(t *testing.T) {
 			codes := []int{201, 202}
 
 			for _, code := range codes {
-				maker.PlanGet("abc.com", code, "")
+				maker.NewGet("abc.com", code).SetResponse("")
 				resp, err := maker.Client().Get("abc.com")
 				So(err, ShouldBeNil)
 				So(resp.Header.Get("Location"), ShouldNotBeNil)
@@ -99,7 +110,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		maker := NewFakepointMaker()
 
 		Convey("defaults to 1", func() {
-			maker.PlanGet("http://abc.com", 200, "")
+			maker.NewGet("http://abc.com", 200).SetResponse("")
 			resp, err := maker.Client().Get("http://abc.com")
 			resp2, err := maker.Client().Get("http://abc.com")
 			So(err, ShouldBeNil)
@@ -108,7 +119,7 @@ func TestFakeRoundTrip(t *testing.T) {
 		})
 
 		Convey("is configurable", func() {
-			maker.PlanGet("http://abc.com", 200, "").Duplicate(1)
+			maker.NewGet("http://abc.com", 200).SetResponse("").Duplicate(1)
 			resp, err := maker.Client().Get("http://abc.com")
 			resp2, err := maker.Client().Get("http://abc.com")
 			resp3, err := maker.Client().Get("http://abc.com")
@@ -121,7 +132,7 @@ func TestFakeRoundTrip(t *testing.T) {
 
 	Convey("It works with a Request object", t, func() {
 		maker := NewFakepointMaker()
-		maker.PlanGet("http://example.com", 200, "hello world")
+		maker.NewGet("http://example.com", 200).SetResponse("hello world")
 		req, err := http.NewRequest("GET", "http://example.com", nil)
 		resp, err := maker.Client().Do(req)
 		text, _ := ioutil.ReadAll(resp.Body)
