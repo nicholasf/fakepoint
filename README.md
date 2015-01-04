@@ -19,7 +19,7 @@ Create Fake endpoints for HTTP testing. Specify the response data sent back.
 
 * 324780a16382aa8f390ed549e81c79a3a7048af9 (3/1/15)
 
-Breaking change to previous DSL. FakepointMaker now uses `NewGet` instead of `PlanGet`. Fakepoints can now be given files *or* strings for response data - `SetResponse` or `SetResponseData`.
+Breaking change to previous DSL. FakepointMaker now uses `NewGet` instead of `PlanGet`. Fakepoints can now be given files *or* strings for response data - `SetResponse` or `SetResponseDocument`.
 
 ## Example
 
