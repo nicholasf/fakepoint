@@ -27,7 +27,7 @@ Use it to simulate a third party API in your tests.
 
 ```golang
 maker := NewFakepointMaker()
-maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse("{ \"code\": 200 }").SetHeader("Content-Type", "application/json")
+maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse(`{ "code": 200 }`).SetHeader("Content-Type", "application/json")
 resp, _ := maker.Client().Get("https://api.opsgenie.com/v1/json/alert")
 ```
 
@@ -67,11 +67,11 @@ fakepoint := maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200)
 Response data to be returned may be set with one of two methods on the fakepoint; `SetResponse(..)` or `SetResponseDocument(..)`:
 
 ```golang
-	fakepoint.SetResponse( "{ \"code\": 200 }") //response uses the a string
+	fakepoint.SetResponse(`{ "code": 200 }`) //response uses the a string
 	fakepoint.SetResponseDocument("./response.json") //response loads the file using ioutil.ReadFile
 ```
 
-Note, that Fakepoints using chaining. So you could've just written `maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse("{ \"code\": 200 }")`
+Note, that Fakepoints uses chaining. So you could've just written ``maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200).SetResponse(`{ "code": 200 }`)``
 
 This is, perhaps, unidiomatic Golang; in hindsight the [Must pattern](http://golang.org/pkg/text/template/#Must) would have been more appropriate. C'est la vie.
 
@@ -79,7 +79,7 @@ You can chain further calls to set headers and increase the frequency of the end
 
 ``` golang
 trip := maker.NewGet("https://api.opsgenie.com/v1/json/alert", 200)
-trip.SetResponse( "{ \"code\": 200 }").SetHeader("Content-Type", "application/json").Duplicate(1)
+trip.SetResponse(`{ "code": 200 }`).SetHeader("Content-Type", "application/json").Duplicate(1)
 ```
 
 Fakepoints only have a lifetime of one request *unless* `Duplicate` is used to specify additional call lifetimes.
@@ -123,7 +123,7 @@ import (
 func TestOpsgenie(t *testing.T) {
 	Convey("An Error log is sent to the notifier", t, func() {
 		maker := fakepoint.NewFakepointMaker()
-		maker.NewPost("https://api.opsgenie.com/v1/json/alert", 200).SetResponse("{ \"code\": 200 }")
+		maker.NewPost("https://api.opsgenie.com/v1/json/alert", 200).SetResponse(`{ "code": 200 }`)
 		resp, err := notifications.Requester(*maker.Client(), ("https://api.opsgenie.com/v1/json/alert"), []byte(``))
 		So(err, ShouldBeNil)
 		So(resp.StatusCode, ShouldEqual, 200)
